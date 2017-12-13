@@ -131,7 +131,7 @@ $RM -rf /tmp/nssi > /dev/null 2>&1 ||$TRUE
 $MKDIR /tmp/nssi > /dev/null 2>&1 ||$TRUE
 $RM ./.tcpdump-pids > /dev/null 2>&1 ||$TRUE
 $RM $BASEDIR/run-tcpdump
-cat <<EOF
+cat <<EOF > $BASEDIR/run-tcpdump
 #!/bin/bash
 
 while (true)
