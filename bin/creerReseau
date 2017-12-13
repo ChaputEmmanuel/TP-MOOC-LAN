@@ -182,7 +182,7 @@ done
 # open PDF viewer ?
 # if $DUMPIF run wireshark ?
 
-echo "Please add the following options to wireshark :"
+echo "Vous pouvez utiliser les options suivantes de wireshark :"
 echo "wireshark $WIRESHARK_IF"
 
 
