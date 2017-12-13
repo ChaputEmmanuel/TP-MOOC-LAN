@@ -130,13 +130,13 @@ WIRESHARK_IF=""
 $RM -rf /tmp/nssi > /dev/null 2>&1 ||$TRUE
 $MKDIR /tmp/nssi > /dev/null 2>&1 ||$TRUE
 $RM ./.tcpdump-pids > /dev/null 2>&1 ||$TRUE
-$RM $BASEDIR/run-tcpdump
+$RM $BASEDIR/run-tcpdump > /dev/null 2>&1 ||$TRUE
 cat <<EOF > $BASEDIR/run-tcpdump
 #!/bin/bash
 
 while (true)
 do
-   tcpdump -U -i $1 -w $2
+   tcpdump -U -i \$1 -w \$2
 done
    
 EOF
