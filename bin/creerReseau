@@ -130,6 +130,18 @@ WIRESHARK_IF=""
 $RM -rf /tmp/nssi > /dev/null 2>&1 ||$TRUE
 $MKDIR /tmp/nssi > /dev/null 2>&1 ||$TRUE
 $RM ./.tcpdump-pids > /dev/null 2>&1 ||$TRUE
+$RM $BASEDIR/run-tcpdump
+cat <<EOF
+#!/bin/bash
+
+while (true)
+do
+   tcpdump -U -i $1 -w $2
+done
+   
+EOF
+$CHMOD +x $BASEDIR/run-tcpdump
+
 if [ ""$DUMPIF == "all" ] ; then
    DUMPIF=$IFLIST
 fi
