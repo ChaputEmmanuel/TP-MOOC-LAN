@@ -1,31 +1,6 @@
 #!/bin/bash
 
-VERBOSE=True
-
-BASEDIR=$PWD
-BRCTL=/sbin/brctl
-IP=/sbin/ip
-MKFIFO=/usr/bin/mkfifo
-MKDIR=/bin/mkdir
-RM=/bin/rm
-TOUCH=/usr/bin/touch
-TRUE=/bin/true
-
-if [ $UID != 0 ] ; then
-   echo "T'es pas root, tu passes ta route, ..."
-   exit
-fi
-
-LABCONF=$BASEDIR/lab.conf
-LABSTARTUP=$BASEDIR/lab.startup
-
-if [ $VERBOSE == True ] ; then
-  echo "* Chargement du fichier de configuration"
-fi
-
-if [ -f $LABCONF ] ; then 
-   . $LABCONF
-fi
+. `dirname $0`/reseauCommun
 
 if [ $VERBOSE == True ] ; then
   echo "* Paramétrage du lab"
@@ -35,6 +10,8 @@ if [ -f $LABSTARTUP ] ; then
    . $LABSTARTUP
 fi
 
+# Création des machines
+#======================
 if [ $VERBOSE == True ] ; then
    echo "* Création des machines"
 fi
@@ -77,92 +54,12 @@ if [ $VERBOSE == True ] ; then
    echo "* Création des réseaux"
 fi
 
+
 IFLIST=""
 for l in $LINKS
 do
-   # Format h:i[:@]!h:i[:@]
-   #-----------------------
-   if [ $VERBOSE == True ] ; then
-       echo "    Link $l ..."
-   fi
-   # Parsing source
-   #---------------
-   src=`echo $l| cut -d! -f1`
-   srch=`echo $src|cut -d: -f1`
-   if [ -z "$srch" ] ; then
-      echo "*** No source host defined in '$l'"
-      exit
-   fi
-   srcIsBr=no
-   if [ -z "`$IP netns list|grep $srch`" ] ; then
-       for br in $BRIDGES
-       do
-	   if [ $br == $srch ] ; then
-               if [ $VERBOSE == True ] ; then
-	           echo "       $srch is a bridge"
-	       fi
-	       srcIsBr=yes
-	   fi
-       done
-       if [ "$srcIsBr" == "no" ] ; then
-	   echo "*** Unknown host '$srch'"
-	   exit
-       fi
-   fi
-   srci=`echo $src|cut -d: -f2`
-   if [ -z "$srci" ] ; then
-      echo "*** No source interface defined in '$l'"
-      exit
-   fi
-   IFLIST="$IFLIST $srch:$srci"
-   srca=`echo $src|cut -d: -f3`
 
-   # Parsing destination
-   #--------------------
-   dst=`echo $l| cut -d! -f2`
-   dsth=`echo $dst|cut -d: -f1`
-   if [ -z "$dsth" ] ; then
-      echo "*** No destination host defined in '$l'"
-      exit
-   fi
-   dstIsBr=no
-   if [ -z "`$IP netns list|grep $dsth`" ] ; then
-       for br in $BRIDGES
-       do
-	   if [ $br == $dsth ] ; then
-               if [ $VERBOSE == True ] ; then
-	           echo "       Dst is a bridge"
-	       fi
-	       dstIsBr=yes
-	   fi
-       done
-       if [ "$dstIsBr" == "no" ] ; then
-	   echo "*** Unknown host '$dsth'"
-	   exit
-       fi
-   fi
-   dsti=`echo $dst|cut -d: -f2`
-   if [ -z ""$dsti -a "$dstIsBr" == "no" ] ; then
-      echo "*** No destination interface defined in '$l'"
-      exit
-   fi
-   IFLIST="$IFLIST $dsth:$dsti"
-   dsta=`echo $dst|cut -d: -f3`
-   if [ $VERBOSE == True ] ; then
-       echo "       $srch ($srci)  <-> $dsth ($dsti)"
-       if [ -n "$srca" ] ; then
-	   echo "       $srch : $srca"
-       fi   
-       if [ -n "$dsta" ] ; then
-	   echo "       $dsth : $dsta"
-       fi   
-   fi
-
-   # I only build links where dstIsBr or !srcIsBr
-   #---------------------------------------------
-   if [ "$srcIsBr" == "yes" -a "$dstIsBr" == "no" ] ; then
-      echo "Forbiden bridge to host link : $l"
-   fi
+   analyseUnLien $l
 
    # Build the link
    #---------------
@@ -285,7 +182,7 @@ done
 # open PDF viewer ?
 # if $DUMPIF run wireshark ?
 
-echo "Please add the following options to wireshark :"
+echo "Vous pouvez utiliser les options suivantes de wireshark :"
 echo "wireshark $WIRESHARK_IF"
 
 

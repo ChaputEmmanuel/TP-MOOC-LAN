@@ -1,10 +1,11 @@
 #!/bin/bash
 
-VERBOSE=True
+VERBOSE=False
 
 BASEDIR=$PWD
 BRCTL=/sbin/brctl
 IP=/sbin/ip
+KILL=/bin/kill
 MKFIFO=/usr/bin/mkfifo
 MKDIR=/bin/mkdir
 RM=/bin/rm
@@ -12,7 +13,8 @@ TOUCH=/usr/bin/touch
 TRUE=/bin/true
 
 if [ $UID != 0 ] ; then
-   echo "T'es pas root, tu passes ta route, ..."
+   echo "Il est nécessaire d'être administrateur"
+   echo "Exécutez d'abord la commade sudo su"
    exit
 fi
 
@@ -27,11 +29,107 @@ if [ -f $LABCONF ] ; then
    . $LABCONF
 fi
 
-if [ $VERBOSE == True ] ; then
-  echo "* Paramétrage du lab"
-fi
+analyseUnLien () {
+   l=$1
 
-if [ -f $LABSTARTUP ] ; then 
-   . $LABSTARTUP
-fi
+   # Format h:i[:@]!h:i[:@]
+   #-----------------------
+   if [ $VERBOSE == True ] ; then
+       echo "    Link $l ..."
+   fi
+   # Parsing source
+   #---------------
+   src=`echo $l| cut -d! -f1`
+   srch=`echo $src|cut -d: -f1`
+   if [ -z "$srch" ] ; then
+      echo "*** No source host defined in '$l'"
+      exit
+   fi
+   srcIsBr=no
+   if [ -z "`$IP netns list|grep $srch`" ] ; then
+       for br in $BRIDGES
+       do
+	   if [ $br == $srch ] ; then
+               if [ $VERBOSE == True ] ; then
+	           echo "       $srch is a bridge"
+	       fi
+	       srcIsBr=yes
+	   fi
+       done
+       if [ "$srcIsBr" == "no" ] ; then
+	   echo "*** Unknown host '$srch'"
+	   exit
+       fi
+   fi
+   srci=`echo $src|cut -d: -f2`
+   if [ -z "$srci" ] ; then
+      echo "*** No source interface defined in '$l'"
+      exit
+   fi
+   IFLIST="$IFLIST $srch:$srci"
+   srca=`echo $src|cut -d: -f3`
+
+   # Parsing destination
+   #--------------------
+   dst=`echo $l| cut -d! -f2`
+   dsth=`echo $dst|cut -d: -f1`
+   if [ -z "$dsth" ] ; then
+      echo "*** No destination host defined in '$l'"
+      exit
+   fi
+   dstIsBr=no
+   if [ -z "`$IP netns list|grep $dsth`" ] ; then
+       for br in $BRIDGES
+       do
+	   if [ $br == $dsth ] ; then
+               if [ $VERBOSE == True ] ; then
+	           echo "       Dst is a bridge"
+	       fi
+	       dstIsBr=yes
+	   fi
+       done
+       if [ "$dstIsBr" == "no" ] ; then
+	   echo "*** Unknown host '$dsth'"
+	   exit
+       fi
+   fi
+   dsti=`echo $dst|cut -d: -f2`
+   if [ -z ""$dsti -a "$dstIsBr" == "no" ] ; then
+      echo "*** No destination interface defined in '$l'"
+      exit
+   fi
+   IFLIST="$IFLIST $dsth:$dsti"
+   dsta=`echo $dst|cut -d: -f3`
+   if [ $VERBOSE == True ] ; then
+       echo "       $srch ($srci)  <-> $dsth ($dsti)"
+       if [ -n "$srca" ] ; then
+	   echo "       $srch : $srca"
+       fi   
+       if [ -n "$dsta" ] ; then
+	   echo "       $dsth : $dsta"
+       fi   
+   fi
+
+   # I only build links where dstIsBr or !srcIsBr
+   #---------------------------------------------
+   if [ "$srcIsBr" == "yes" -a "$dstIsBr" == "no" ] ; then
+      echo "Forbiden bridge to host link : $l"
+   fi
+}
+
+# Parse command line options
+while [[ $# > 0 ]] ;
+do
+   case "$1" in
+      -v )
+         VERBOSE=True
+      ;;
+      * )
+         echo "Option '$1' inconnue"
+         exit
+      ;;
+   esac
+   shift
+done
+
 
