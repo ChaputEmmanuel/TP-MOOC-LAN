@@ -1,0 +1,37 @@
+#!/bin/bash
+
+VERBOSE=True
+
+BASEDIR=$PWD
+BRCTL=/sbin/brctl
+IP=/sbin/ip
+MKFIFO=/usr/bin/mkfifo
+MKDIR=/bin/mkdir
+RM=/bin/rm
+TOUCH=/usr/bin/touch
+TRUE=/bin/true
+
+if [ $UID != 0 ] ; then
+   echo "T'es pas root, tu passes ta route, ..."
+   exit
+fi
+
+LABCONF=$BASEDIR/lab.conf
+LABSTARTUP=$BASEDIR/lab.startup
+
+if [ $VERBOSE == True ] ; then
+  echo "* Chargement du fichier de configuration"
+fi
+
+if [ -f $LABCONF ] ; then 
+   . $LABCONF
+fi
+
+if [ $VERBOSE == True ] ; then
+  echo "* Paramétrage du lab"
+fi
+
+if [ -f $LABSTARTUP ] ; then 
+   . $LABSTARTUP
+fi
+
