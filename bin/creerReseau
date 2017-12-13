@@ -129,6 +129,7 @@ fi
 WIRESHARK_IF=""
 $RM -rf /tmp/nssi > /dev/null 2>&1 ||$TRUE
 $MKDIR /tmp/nssi > /dev/null 2>&1 ||$TRUE
+$CHMOD a+rx /tmp/nssi
 $RM ./.tcpdump-pids > /dev/null 2>&1 ||$TRUE
 $RM $BASEDIR/run-tcpdump > /dev/null 2>&1 ||$TRUE
 cat <<EOF > $BASEDIR/run-tcpdump
@@ -163,7 +164,9 @@ do
    fi
 
    $MKDIR /tmp/nssi/$h > /dev/null 2>&1 ||$TRUE
+   $CHMOD a+rx /tmp/nssi/$h
    $MKFIFO /tmp/nssi/$h/$i
+   $CHMOD a+r /tmp/nssi/$h
 
    WIRESHARK_IF="$WIRESHARK_IF -i /tmp/nssi/$h/$i "
 
