@@ -4,6 +4,7 @@ VERBOSE=False
 
 BASEDIR=$PWD
 BRCTL=/sbin/brctl
+CHMOD=/bin/chmod
 IP=/sbin/ip
 KILL=/bin/kill
 MKFIFO=/usr/bin/mkfifo

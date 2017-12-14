@@ -38,7 +38,9 @@ do
     if [ $VERBOSE == True ] ; then
 	echo "    Création de $sw"
     fi
-    $BRCTL addbr $sw
+    #$BRCTL addbr $sw
+    $IP link add name $sw type bridge
+    $BRIDGE vlan del dev $sw vid 1 self
     if [ $VERBOSE == True ] ; then
 	echo "    Activation de $sw"
     fi
@@ -92,9 +94,14 @@ do
           $IP link add $dsth.$dsti type veth peer name $srch.$srci
 	  $IP link set $dsth.$dsti up
 	  $IP link set $srch.$srci up
-          $BRCTL addif $srch $srch.$srci
+          #$BRCTL addif $srch $srch.$srci
+	  $IP link set dev $srch.$srci master $srch
+	  $BRIDGE vlan del vid 1 dev $srch.$srci 
       fi
-      $BRCTL addif $dsth $dsth.$dsti
+      #$BRCTL addif $dsth $dsth.$dsti
+      $IP link set dev $dsth.$dsti master $dsth
+      $BRIDGE vlan del vid 1 dev $dsth.$dsti
+      
       if [ $VERBOSE == True ] ; then
           echo " OK"
       fi
