@@ -150,7 +150,7 @@ done
 EOF
 $CHMOD +x $BASEDIR/run-tcpdump
 
-if [ ""$DUMPIF == "all" ] ; then
+if [ "$DUMPIF" == "all" ] ; then
    DUMPIF=$IFLIST
 fi
 for snoopi in $DUMPIF

@@ -6,6 +6,7 @@ BASEDIR=$PWD
 BRCTL=/sbin/brctl
 BRIDGE=/sbin/bridge
 CHMOD=/bin/chmod
+CP=/bin/cp
 IP=/sbin/ip
 KILL=/bin/kill
 MKFIFO=/usr/bin/mkfifo
@@ -68,7 +69,9 @@ analyseUnLien () {
       echo "*** No source interface defined in '$l'"
       exit
    fi
-   IFLIST="$IFLIST $srch:$srci"
+   if [ "$srcIsBr" == "no" ] ; then
+       IFLIST="$IFLIST $srch:$srci"
+   fi
    srca=`echo $src|cut -d: -f3`
 
    # Parsing destination
@@ -100,7 +103,9 @@ analyseUnLien () {
       echo "*** No destination interface defined in '$l'"
       exit
    fi
-   IFLIST="$IFLIST $dsth:$dsti"
+   if [ "$dstIsBr" == "no" ] ; then
+       IFLIST="$IFLIST $dsth:$dsti"
+   fi
    dsta=`echo $dst|cut -d: -f3`
    if [ $VERBOSE == True ] ; then
        echo "       $srch ($srci)  <-> $dsth ($dsti)"
