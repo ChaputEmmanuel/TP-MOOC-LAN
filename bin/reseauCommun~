@@ -4,7 +4,9 @@ VERBOSE=False
 
 BASEDIR=$PWD
 BRCTL=/sbin/brctl
+BRIDGE=/sbin/bridge
 CHMOD=/bin/chmod
+CP=/bin/cp
 IP=/sbin/ip
 KILL=/bin/kill
 MKFIFO=/usr/bin/mkfifo
@@ -38,6 +40,7 @@ analyseUnLien () {
    if [ $VERBOSE == True ] ; then
        echo "    Link $l ..."
    fi
+   
    # Parsing source
    #---------------
    src=`echo $l| cut -d! -f1`
@@ -67,7 +70,15 @@ analyseUnLien () {
       echo "*** No source interface defined in '$l'"
       exit
    fi
-   IFLIST="$IFLIST $srch:$srci"
+   # Do not set up if name has a leading -
+   doSetUp=True
+   if [ "${srci:0:1}" == "-" ] ; then
+       doSetUp=False
+   fi
+   
+   if [ "$srcIsBr" == "no" ] ; then
+       IFLIST="$IFLIST $srch:$srci"
+   fi
    srca=`echo $src|cut -d: -f3`
 
    # Parsing destination
@@ -99,7 +110,9 @@ analyseUnLien () {
       echo "*** No destination interface defined in '$l'"
       exit
    fi
-   IFLIST="$IFLIST $dsth:$dsti"
+   if [ "$dstIsBr" == "no" ] ; then
+       IFLIST="$IFLIST $dsth:$dsti"
+   fi
    dsta=`echo $dst|cut -d: -f3`
    if [ $VERBOSE == True ] ; then
        echo "       $srch ($srci)  <-> $dsth ($dsti)"

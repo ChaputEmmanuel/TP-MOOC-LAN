@@ -40,8 +40,26 @@ analyseUnLien () {
    if [ $VERBOSE == True ] ; then
        echo "    Link $l ..."
    fi
+   
    # Parsing source
    #---------------
+   # Do not set up if name has a leading -
+   doSetUp=True
+   if [ "${l:0:1}" == "-" ] ; then
+       doSetUp=False
+       if [ $VERBOSE == True ] ; then
+           echo "      Unactive"
+       fi
+       l=${l#*-}
+       if [ $VERBOSE == True ] ; then
+           echo "      Using $l"
+       fi 
+   else
+       if [ $VERBOSE == True ] ; then
+	   echo "      On active $l"
+       fi
+   fi
+
    src=`echo $l| cut -d! -f1`
    srch=`echo $src|cut -d: -f1`
    if [ -z "$srch" ] ; then
@@ -69,6 +87,7 @@ analyseUnLien () {
       echo "*** No source interface defined in '$l'"
       exit
    fi
+   
    if [ "$srcIsBr" == "no" ] ; then
        IFLIST="$IFLIST $srch:$srci"
    fi
@@ -117,7 +136,7 @@ analyseUnLien () {
        fi   
    fi
 
-   # I only build links where dstIsBr or !srcIsBr
+   # I only build links where dstIsBr or !srcIsBr
    #---------------------------------------------
    if [ "$srcIsBr" == "yes" -a "$dstIsBr" == "no" ] ; then
       echo "Forbiden bridge to host link : $l"

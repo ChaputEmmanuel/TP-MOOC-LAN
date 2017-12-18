@@ -38,7 +38,9 @@ do
     if [ $VERBOSE == True ] ; then
 	echo "    Création de $sw"
     fi
-    $BRCTL addbr $sw
+    #$BRCTL addbr $sw
+    $IP link add name $sw type bridge
+    $BRIDGE vlan del dev $sw vid 1 self
     if [ $VERBOSE == True ] ; then
 	echo "    Activation de $sw"
     fi
@@ -66,8 +68,11 @@ do
    if [ "$dstIsBr" == "no" ] ; then
       # Source is then *not* a bridge
       $IP netns exec $srch $IP link add $srci type veth peer name $dsti netns $dsth
-      $IP netns exec $srch $IP link set $srci up
-      $IP netns exec $dsth $IP link set $dsti up
+      if [ "$doSetUp" == "yes" ] ; then
+         $IP netns exec $srch $IP link set $srci up
+         $IP netns exec $dsth $IP link set $dsti up
+      fi
+      
       if [ -n ""$srca ] ; then
          $IP netns exec $srch $IP addr add $srca dev $srci
       fi
@@ -80,8 +85,11 @@ do
       fi
       if [ "$srcIsBr" == "no" ] ; then
           $IP link add $dsth.$dsti type veth peer name $srci netns $srch
-	  $IP link set $dsth.$dsti up
-	  $IP netns exec $srch $IP link set $srci up
+          if [ "$doSetUp" == "yes" ] ; then
+             $IP link set $dsth.$dsti up
+	     $IP netns exec $srch $IP link set $srci up
+	  fi
+	  
 	  if [ -n "$srca" ] ; then
               $IP netns exec $srch $IP addr add $srca dev $srci
 	  fi
@@ -90,11 +98,19 @@ do
               echo -n  " connecting to $srch.$srci"
           fi
           $IP link add $dsth.$dsti type veth peer name $srch.$srci
-	  $IP link set $dsth.$dsti up
-	  $IP link set $srch.$srci up
-          $BRCTL addif $srch $srch.$srci
+          if [ "$doSetUp" == "yes" ] ; then
+             $IP link set $dsth.$dsti up
+	     $IP link set $srch.$srci up
+	  fi
+	  
+          #$BRCTL addif $srch $srch.$srci
+	  $IP link set dev $srch.$srci master $srch
+	  $BRIDGE vlan del vid 1 dev $srch.$srci 
       fi
-      $BRCTL addif $dsth $dsth.$dsti
+      #$BRCTL addif $dsth $dsth.$dsti
+      $IP link set dev $dsth.$dsti master $dsth
+      $BRIDGE vlan del vid 1 dev $dsth.$dsti
+      
       if [ $VERBOSE == True ] ; then
           echo " OK"
       fi
@@ -143,7 +159,7 @@ done
 EOF
 $CHMOD +x $BASEDIR/run-tcpdump
 
-if [ ""$DUMPIF == "all" ] ; then
+if [ "$DUMPIF" == "all" ] ; then
    DUMPIF=$IFLIST
 fi
 for snoopi in $DUMPIF
@@ -194,10 +210,8 @@ do
    
 done
 
-# open PDF viewer ?
-# if $DUMPIF run wireshark ?
-
-echo "Vous pouvez utiliser les options suivantes de wireshark :"
-echo "wireshark $WIRESHARK_IF"
-
+if [ -n "$WIRESHARK_IF" ] ; then
+   echo "Vous pouvez utiliser les options suivantes de wireshark :"
+   echo "wireshark $WIRESHARK_IF"
+fi
 
